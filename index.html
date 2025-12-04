@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMT Sector Micro-Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: transparent;
+            color: #e8e8e8;
+            overflow-x: hidden;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            background: #191919;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Header */
+        .dashboard-header {
+            padding: 20px 24px 16px 24px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .dashboard-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-button {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            color: #9b9b9b;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .tab-button:hover {
+            background: #252525;
+            border-color: #3a3a3a;
+            color: #e8e8e8;
+        }
+
+        .tab-button.active {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+            color: #ffffff;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Pulse View (Chart) */
+        .pulse-view {
+            padding: 16px 24px 24px 24px;
+        }
+
+        .ticker-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .ticker-button {
+            padding: 6px 12px;
+            background: #252525;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            color: #9b9b9b;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .ticker-button:hover {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+            color: #e8e8e8;
+        }
+
+        .ticker-button.active {
+            background: #0066ff;
+            border-color: #0066ff;
+            color: #ffffff;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sector Breakdown View (Heatmap) */
+        .sector-view {
+            padding: 16px 24px 24px 24px;
+        }
+
+        .heatmap-container {
+            width: 100%;
+            height: 600px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        /* TradingView Widget Containers */
+        #tradingview-chart,
+        #tradingview-heatmap {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9b9b9b;
+            font-size: 14px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 16px 16px 12px 16px;
+            }
+
+            .dashboard-title {
+                font-size: 16px;
+            }
+
+            .pulse-view,
+            .sector-view {
+                padding: 12px 16px 16px 16px;
+            }
+
+            .chart-container {
+                height: 400px;
+            }
+
+            .heatmap-container {
+                height: 500px;
+            }
+
+            .tab-button {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+
+            .ticker-button {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chart-container {
+                height: 350px;
+            }
+
+            .heatmap-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="dashboard-title">TMT Sector Micro-Dashboard</div>
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="pulse">
+                    📈 Pulse
+                </button>
+                <button class="tab-button" data-tab="sector">
+                    🗺️ Sector Breakdown
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="pulse" class="tab-content active">
+            <div class="pulse-view">
+                <div class="ticker-selector">
+                    <button class="ticker-button active" data-ticker="DJIA" data-exchange="TVC">DJIA</button>
+                    <button class="ticker-button" data-ticker="QQQ" data-exchange="NASDAQ">QQQ</button>
+                    <button class="ticker-button" data-ticker="SPY" data-exchange="AMEX">SPY</button>
+                    <button class="ticker-button" data-ticker="GLD" data-exchange="NASDAQ">GLD</button>
+                    <button class="ticker-button" data-ticker="BND" data-exchange="NASDAQ">BND</button>
+                    <button class="ticker-button" data-ticker="VIX" data-exchange="TVC">VIX</button>
+                    <button class="ticker-button" data-ticker="VTI" data-exchange="AMEX">VTI</button>
+                </div>
+                <div class="chart-container">
+                    <div id="tradingview-chart">
+                        <div class="loading">Loading chart...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sector" class="tab-content">
+            <div class="sector-view">
+                <div class="heatmap-container">
+                    <div id="tradingview-heatmap">
+                        <div class="loading">Loading heatmap...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TradingView Widget Scripts -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+    <script type="text/javascript">
+        // Global state
+        let currentTicker = 'TVC:DJIA';
+        let chartWidget = null;
+        let heatmapWidget = null;
+        let heatmapInitialized = false;
+
+        // Tab Switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+
+                // Initialize heatmap on first view of sector tab
+                if (tabName === 'sector' && !heatmapInitialized) {
+                    initHeatmapWidget();
+                    heatmapInitialized = true;
+                }
+            });
+        });
+
+        // Ticker Switching
+        document.querySelectorAll('.ticker-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const ticker = this.getAttribute('data-ticker');
+                const exchange = this.getAttribute('data-exchange');
+                const fullSymbol = exchange + ':' + ticker;
+                currentTicker = fullSymbol;
+
+                // Update active ticker button
+                document.querySelectorAll('.ticker-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Clear the container
+                const chartContainer = document.getElementById('tradingview-chart');
+                chartContainer.innerHTML = '';
+
+                // Update chart
+                if (chartWidget) {
+                    try {
+                        chartWidget.remove();
+                    } catch (e) {
+                        console.log('Widget cleanup:', e);
+                    }
+                    chartWidget = null;
+                }
+                initChartWidget(fullSymbol);
+            });
+        });
+
+        // Initialize TradingView Chart Widget
+        function initChartWidget(symbol) {
+            if (typeof TradingView === 'undefined') {
+                setTimeout(() => initChartWidget(symbol), 100);
+                return;
+            }
+
+            try {
+                chartWidget = new TradingView.widget({
+                    "autosize": true,
+                    "symbol": symbol,
+                    "interval": "D",
+                    "timezone": "America/New_York",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#1a1a1a",
+                    "enable_publishing": false,
+                    "backgroundColor": "#1a1a1a",
+                    "gridColor": "#252525",
+                    "hide_top_toolbar": false,
+                    "hide_legend": false,
+                    "save_image": false,
+                    "container_id": "tradingview-chart",
+                    "allow_symbol_change": true,
+                    "show_popup_button": true,
+                    "popup_width": "1000",
+                    "popup_height": "650",
+                    "withdateranges": true,
+                    "hide_side_toolbar": false,
+                    "details": true,
+                    "hotlist": true,
+                    "calendar": true,
+                    "studies": [
+                        "MASimple@tv-basicstudies",
+                        "Volume@tv-basicstudies"
+                    ],
+                    "support_host": "https://www.tradingview.com"
+                });
+                console.log('Chart initialized:', symbol);
+            } catch (error) {
+                console.error('Chart error:', error);
+            }
+        }
+
+        // Initialize TradingView Heatmap Widget
+        function initHeatmapWidget() {
+            if (typeof TradingView === 'undefined') {
+                setTimeout(initHeatmapWidget, 100);
+                return;
+            }
+
+            try {
+                const heatmapContainer = document.getElementById('tradingview-heatmap');
+                heatmapContainer.innerHTML = '';
+
+                // Create comprehensive market overview widget
+                heatmapWidget = new TradingView.widget({
+                    "width": "100%",
+                    "height": "100%",
+                    "symbolsGroups": [
+                        {
+                            "name": "Indices",
+                            "originalName": "Indices",
+                            "symbols": [
+                                {"name": "FOREXCOM:SPXUSD", "displayName": "S&P 500"},
+                                {"name": "FOREXCOM:NSXUSD", "displayName": "US 100"},
+                                {"name": "TVC:DJI", "displayName": "Dow 30"},
+                                {"name": "INDEX:NKY", "displayName": "Nikkei 225"},
+                                {"name": "INDEX:DEU40", "displayName": "DAX Index"}
+                            ]
+                        },
+                        {
+                            "name": "Technology",
+                            "originalName": "Technology",
+                            "symbols": [
+                                {"name": "NASDAQ:AAPL", "displayName": "Apple"},
+                                {"name": "NASDAQ:MSFT", "displayName": "Microsoft"},
+                                {"name": "NASDAQ:GOOGL", "displayName": "Alphabet"},
+                                {"name": "NASDAQ:META", "displayName": "Meta"},
+                                {"name": "NASDAQ:NVDA", "displayName": "NVIDIA"},
+                                {"name": "NASDAQ:AMD", "displayName": "AMD"},
+                                {"name": "NASDAQ:INTC", "displayName": "Intel"},
+                                {"name": "NASDAQ:TSLA", "displayName": "Tesla"},
+                                {"name": "NASDAQ:NFLX", "displayName": "Netflix"},
+                                {"name": "NASDAQ:ADBE", "displayName": "Adobe"}
+                            ]
+                        },
+                        {
+                            "name": "Semiconductors",
+                            "originalName": "Semiconductors",
+                            "symbols": [
+                                {"name": "NASDAQ:NVDA", "displayName": "NVIDIA"},
+                                {"name": "NASDAQ:AMD", "displayName": "AMD"},
+                                {"name": "NASDAQ:INTC", "displayName": "Intel"},
+                                {"name": "NASDAQ:AVGO", "displayName": "Broadcom"},
+                                {"name": "NASDAQ:QCOM", "displayName": "Qualcomm"},
+                                {"name": "NASDAQ:MU", "displayName": "Micron"},
+                                {"name": "NASDAQ:TXN", "displayName": "Texas Instruments"},
+                                {"name": "NASDAQ:AMAT", "displayName": "Applied Materials"},
+                                {"name": "NASDAQ:LRCX", "displayName": "Lam Research"},
+                                {"name": "NASDAQ:KLAC", "displayName": "KLA Corp"}
+                            ]
+                        },
+                        {
+                            "name": "Communications",
+                            "originalName": "Communications",
+                            "symbols": [
+                                {"name": "NASDAQ:META", "displayName": "Meta"},
+                                {"name": "NASDAQ:GOOGL", "displayName": "Alphabet"},
+                                {"name": "NYSE:T", "displayName": "AT&T"},
+                                {"name": "NYSE:VZ", "displayName": "Verizon"},
+                                {"name": "NASDAQ:TMUS", "displayName": "T-Mobile"},
+                                {"name": "NASDAQ:NFLX", "displayName": "Netflix"},
+                                {"name": "NYSE:DIS", "displayName": "Disney"},
+                                {"name": "NASDAQ:CMCSA", "displayName": "Comcast"}
+                            ]
+                        },
+                        {
+                            "name": "Software",
+                            "originalName": "Software",
+                            "symbols": [
+                                {"name": "NASDAQ:MSFT", "displayName": "Microsoft"},
+                                {"name": "NYSE:CRM", "displayName": "Salesforce"},
+                                {"name": "NASDAQ:ADBE", "displayName": "Adobe"},
+                                {"name": "NYSE:NOW", "displayName": "ServiceNow"},
+                                {"name": "NYSE:ORCL", "displayName": "Oracle"},
+                                {"name": "NYSE:SNOW", "displayName": "Snowflake"},
+                                {"name": "NASDAQ:WDAY", "displayName": "Workday"},
+                                {"name": "NASDAQ:TEAM", "displayName": "Atlassian"},
+                                {"name": "NYSE:PLTR", "displayName": "Palantir"}
+                            ]
+                        },
+                        {
+                            "name": "Cloud & Infrastructure",
+                            "originalName": "Cloud & Infrastructure",
+                            "symbols": [
+                                {"name": "NASDAQ:AMZN", "displayName": "Amazon"},
+                                {"name": "NASDAQ:MSFT", "displayName": "Microsoft"},
+                                {"name": "NASDAQ:GOOGL", "displayName": "Google"},
+                                {"name": "NYSE:IBM", "displayName": "IBM"},
+                                {"name": "NYSE:NET", "displayName": "Cloudflare"},
+                                {"name": "NYSE:DDOG", "displayName": "Datadog"},
+                                {"name": "NASDAQ:CFLT", "displayName": "Confluent"}
+                            ]
+                        }
+                    ],
+                    "showSymbolLogo": true,
+                    "colorTheme": "dark",
+                    "isTransparent": false,
+                    "displayMode": "adaptive",
+                    "locale": "en",
+                    "backgroundColor": "#1a1a1a",
+                    "container_id": "tradingview-heatmap"
+                });
+
+                console.log('Heatmap initialized');
+            } catch (error) {
+                console.error('Heatmap error:', error);
+            }
+        }
+
+        // Initialize everything when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('TMT Dashboard initializing...');
+
+            // Wait for TradingView library to be available
+            function checkTradingViewLoaded() {
+                if (typeof TradingView !== 'undefined') {
+                    console.log('TradingView library loaded successfully');
+                    // Initialize the default chart
+                    setTimeout(() => {
+                        initChartWidget(currentTicker);
+                    }, 100);
+                } else {
+                    console.log('Waiting for TradingView library...');
+                    setTimeout(checkTradingViewLoaded, 100);
+                }
+            }
+
+            checkTradingViewLoaded();
+        });
+
+        // Handle window resize for responsive widgets
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                console.log('Window resized - widgets auto-adjusting');
+            }, 250);
+        });
+    </script>
+</body>
+</html>
